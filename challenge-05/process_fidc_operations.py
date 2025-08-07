@@ -62,8 +62,8 @@ class BuyOperation(Operation):
         # Caso seja possível executar a operação, atualizamos o status.
         # Caso contrário, mantemos como PENDING para tentar novamente depois.
         try:
-            self.save()
             self.status = "EXECUTED"
+            self.save()
         except Exception as e:
             self.status = "PENDING"
             self.process_trys += 1
@@ -84,8 +84,8 @@ class SellOperation(Operation):
 
         # Mesma lógica de salvamento e atualização de status da BuyOperation
         try:
-            self.save()
             self.status = "EXECUTED"
+            self.save()
         except Exception as e:
             self.status = "PENDING"
             self.process_trys += 1
