@@ -67,8 +67,11 @@ class BuyOperation(Operation):
         except Exception as e:
             self.status = "PENDING"
             self.process_trys += 1
-            return f"Buy operation failed: {e}"
-        return f"Buy operation executed: {self.quantity} {self.asset_code} @ {self.execution_price}"
+            logging.error(f"Buy operation failed: {e}")
+        logging.info(
+            f"Buy operation executed: {self.quantity} {self.asset_code} @ {self.execution_price}"
+        )
+        return
 
 
 class SellOperation(Operation):
@@ -89,8 +92,11 @@ class SellOperation(Operation):
         except Exception as e:
             self.status = "PENDING"
             self.process_trys += 1
-            return f"Sell operation failed: {e}"
-        return f"Sell operation executed: {self.quantity} {self.asset_code} @ {self.execution_price}"
+            logging.error(f"Sell operation failed: {e}")
+        logging.info(
+            f"Sell operation executed: {self.quantity} {self.asset_code} @ {self.execution_price}"
+        )
+        return
 
 
 # Essa classe permite que manipulemos uma coleção de operações de forma mais organizada.
