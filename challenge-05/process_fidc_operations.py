@@ -4,8 +4,8 @@ import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
+# Simula o envio de um relatório por email
 def send_operations_report(operations, manager_email):
-    # Simula o envio de um relatório por email
     logging.info(
         f"Relatório enviado para {manager_email} com {len(operations)} operações."
     )
@@ -38,6 +38,7 @@ class Operation:
         self.total_value = None
         self.status = "PENDING"
         self.operation_date = date
+        self.process_trys = 0
 
     def save(self):
         # Simula o salvamento da operação no banco de dados
@@ -65,6 +66,7 @@ class BuyOperation(Operation):
             self.status = "EXECUTED"
         except Exception as e:
             self.status = "PENDING"
+            self.process_trys += 1
             return f"Buy operation failed: {e}"
         return f"Buy operation executed: {self.quantity} {self.asset_code} @ {self.execution_price}"
 
@@ -86,6 +88,7 @@ class SellOperation(Operation):
             self.status = "EXECUTED"
         except Exception as e:
             self.status = "PENDING"
+            self.process_trys += 1
             return f"Sell operation failed: {e}"
         return f"Sell operation executed: {self.quantity} {self.asset_code} @ {self.execution_price}"
 
@@ -138,6 +141,13 @@ def process_fidc_operations(fidc_id, start_date, end_date):
     # Vamos segregar a lógica de busca de preços em uma função separada.
     # Isso vai permitir que executemos operações de forma concorrente.
     def process_operation(op, current_date):
+        # Verifica se a operação já foi processada 3 vezes sem sucesso.
+        if op.process_trys >= 3:
+            logging.error(f"Operação {op.id} falhou 3 vezes, não será mais processada.")
+            op.status = "FAILED"
+            return None, None
+
+        # Busca o preço do ativo na data atual.
         try:
             asset_price = requests.get(
                 f"https://anbima-api.com/price/{op.asset_code}?date={current_date}"
