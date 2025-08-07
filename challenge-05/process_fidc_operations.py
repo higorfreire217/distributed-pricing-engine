@@ -67,7 +67,7 @@ class BuyOperation(Operation):
         except Exception as e:
             self.status = "PENDING"
             self.process_trys += 1
-            logging.error(f"Buy operation failed: {e}")
+            logging.error(f"Buy operation {self.asset_code} failed: {e}")
         logging.info(
             f"Buy operation executed: {self.quantity} {self.asset_code} @ {self.execution_price}"
         )
@@ -92,7 +92,7 @@ class SellOperation(Operation):
         except Exception as e:
             self.status = "PENDING"
             self.process_trys += 1
-            logging.error(f"Sell operation failed: {e}")
+            logging.error(f"Sell operation {self.asset_code} failed: {e}")
         logging.info(
             f"Sell operation executed: {self.quantity} {self.asset_code} @ {self.execution_price}"
         )
