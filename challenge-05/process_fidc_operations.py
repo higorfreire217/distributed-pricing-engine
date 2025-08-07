@@ -5,6 +5,57 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from time import sleep
 
 
+class Operation:
+    def __init__(
+        self,
+        id,
+        fidc,
+        operation_date,
+        asset_code,
+        quantity,
+        tax_rate,
+        operation_type,
+        status="PENDING",
+    ):
+        self.id = id
+        self.fidc = fidc
+        self.operation_date = operation_date
+        self.asset_code = asset_code
+        self.quantity = quantity
+        self.tax_rate = tax_rate
+        self.operation_type = operation_type
+        self.status = status
+        self.execution_price = None
+        self.total_value = None
+
+    def save(self):
+        # Implementar persistência conforme necessário
+        pass
+
+    def calculate(self, price, available_cash):
+        raise NotImplementedError("Implementar em subclasses")
+
+
+class Buy(Operation):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, operation_type="BUY", **kwargs)
+
+    def calculate(self, price, available_cash):
+        self.total_value = self.quantity * price * (1 + self.tax_rate)
+        available_cash -= self.total_value
+        return available_cash
+
+
+class Sell(Operation):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, operation_type="SELL", **kwargs)
+
+    def calculate(self, price, available_cash):
+        self.total_value = self.quantity * price * (1 - self.tax_rate)
+        available_cash += self.total_value
+        return available_cash
+
+
 class ExternalAPI:
     @staticmethod
     def get_asset_price(asset_code, date, retries=5, backoff=0.5):
@@ -49,19 +100,13 @@ class FIDCService:
     def process_operation(self, op, date):
         try:
             price_data = ExternalAPI.get_asset_price(op.asset_code, date)
-            if op.operation_type == "BUY":
-                total_value = op.quantity * price_data["price"] * (1 + op.tax_rate)
-                self.fidc.available_cash -= total_value
-            elif op.operation_type == "SELL":
-                total_value = op.quantity * price_data["price"] * (1 - op.tax_rate)
-                self.fidc.available_cash += total_value
-            else:
-                raise Exception("Tipo de operação inválido")
+            self.fidc.available_cash = op.calculate(
+                price_data["price"], self.fidc.available_cash
+            )
             op.execution_price = price_data["price"]
-            op.total_value = total_value
             op.status = "EXECUTED"
             OperationRepository.save(op)
-            AuditTrail.log_operation(op, price_data["price"], total_value)
+            AuditTrail.log_operation(op, price_data["price"], op.total_value)
             return op
         except Exception as e:
             logging.error(f"Falha ao processar operação {op.id}: {e}")
@@ -104,5 +149,6 @@ def process_fidc_operations(fidc_id, start_date, end_date):
         for op in failed_ops:
             service.process_operation(op, op.operation_date)
     fidc.save()
+    # Envia relatório de operações
     send_operations_report(operations, fidc.manager_email)
     return len(operations)

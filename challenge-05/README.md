@@ -24,11 +24,11 @@
 - Auditoria persistente.
 - Validação básica de dados e tratamento de exceções.
 - Reaproveitamento máximo do código existente.
+- As operações agora seguem o princípio do aberto/fechado (Open/Closed Principle), permitindo expandir facilmente o comportamento para novos tipos de operações sem modificar o código existente.
 
 ## Símbolos Não Definidos (Necessitam Implementação)
 
 - `FIDC`: Modelo/entidade do fundo de investimento.
-- `Operation`: Modelo/entidade de operação financeira.
 - `send_operations_report`: Função para envio de relatório por e-mail.
 
 Esses símbolos devem ser implementados.
